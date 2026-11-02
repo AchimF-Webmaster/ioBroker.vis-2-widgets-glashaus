@@ -96,7 +96,8 @@
           "GlashausNavigation",
           "GlashausWeather",
           "GlashausStatusList",
-          "GlashausHouse"
+          "GlashausHouse",
+          "GlashausClimate"
         ]
       }
     },

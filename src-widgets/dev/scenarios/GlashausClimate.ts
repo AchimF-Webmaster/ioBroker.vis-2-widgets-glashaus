@@ -1,0 +1,85 @@
+import type { Scenario } from '../scenario';
+
+const ac = (n: string): string => `harness.0.ac.${n}`;
+
+export default [
+    { widget: 'GlashausClimate', name: 'demo', w: 380, h: 360 },
+    {
+        widget: 'GlashausClimate',
+        name: 'cooling',
+        w: 380,
+        h: 360,
+        data: {
+            title: 'Schlafzimmer',
+            oidPower: ac('power'),
+            oidMode: ac('mode'),
+            oidTarget: ac('target'),
+            oidRoom: ac('room'),
+            oidOutdoor: ac('outdoor'),
+            oidSwing: ac('swing'),
+            oidPowerful: ac('powerful'),
+            oidEnergyToday: ac('today'),
+            oidEnergyYear: ac('year'),
+            min: 18,
+            max: 32,
+        },
+        states: {
+            [ac('power')]: { val: true, type: 'boolean' },
+            [ac('mode')]: { val: 2, type: 'number' },
+            [ac('target')]: { val: 24, unit: '°C' },
+            [ac('room')]: { val: t => Math.round((26.2 + 0.3 * Math.sin(t / 8000)) * 10) / 10, unit: '°C' },
+            [ac('outdoor')]: { val: 29.5, unit: '°C' },
+            [ac('swing')]: { val: true, type: 'boolean' },
+            [ac('powerful')]: { val: false, type: 'boolean' },
+            [ac('today')]: { val: 2.4, unit: 'kWh' },
+            [ac('year')]: { val: 18.6, unit: 'kWh' },
+        },
+    },
+    {
+        widget: 'GlashausClimate',
+        name: 'off',
+        w: 300,
+        h: 300,
+        data: {
+            title: 'Büro',
+            oidPower: ac('off_power'),
+            oidMode: ac('off_mode'),
+            oidTarget: ac('off_target'),
+            oidRoom: ac('off_room'),
+            showDry: false,
+            showFan: false,
+        },
+        states: {
+            [ac('off_power')]: { val: false, type: 'boolean' },
+            [ac('off_mode')]: { val: 1, type: 'number' },
+            [ac('off_target')]: { val: 21, unit: '°C' },
+            [ac('off_room')]: { val: 19.2, unit: '°C' },
+        },
+    },
+    {
+        widget: 'GlashausClimate',
+        name: 'dry-small',
+        w: 230,
+        h: 230,
+        data: {
+            title: 'Keller',
+            oidPower: ac('dry_power'),
+            oidMode: ac('dry_mode'),
+            oidTarget: ac('dry_target'),
+            oidRoom: ac('dry_room'),
+        },
+        states: {
+            [ac('dry_power')]: { val: true, type: 'boolean' },
+            [ac('dry_mode')]: { val: 4, type: 'number' },
+            [ac('dry_target')]: { val: 22, unit: '°C' },
+            [ac('dry_room')]: { val: 17.8, unit: '°C' },
+        },
+    },
+    {
+        widget: 'GlashausClimate',
+        name: 'large',
+        w: 520,
+        h: 460,
+        data: { title: 'Wohnzimmer' },
+    },
+] satisfies Scenario[];
