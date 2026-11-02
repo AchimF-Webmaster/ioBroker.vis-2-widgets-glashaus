@@ -16,7 +16,7 @@ import { ensureGlashausStyle } from './style';
 import { toNum } from './format';
 import { ICON_NAMES } from './icons';
 
-export const ADAPTER = 'vis-2-widgets-glashaus';
+export const ADAPTER = 'vis-2-widgets-glashaus-klima';
 export const SET_COLOR = '#bf7a14';
 
 /** Attributes of the "Design" group that every Glashaus widget has */

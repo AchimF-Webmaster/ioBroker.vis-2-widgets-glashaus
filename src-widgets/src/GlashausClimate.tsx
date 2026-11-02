@@ -253,7 +253,7 @@ export default class GlashausClimate extends GlashausWidget<ClimateRxData, Clima
         return {
             id: 'tplGlashausClimate',
             visSet: ADAPTER,
-            visSetLabel: 'vis_2_widgets_glashaus',
+            visSetLabel: 'vis_2_widgets_glashaus_klima',
             visSetColor: SET_COLOR,
             visSetIcon: `widgets/${ADAPTER}/img/vis-2-widgets-glashaus.svg`,
             visName: 'Climate',

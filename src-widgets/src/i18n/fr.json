@@ -784,5 +784,6 @@
     "wx_k_snow": "Neige",
     "wx_k_sleet": "Neige fondue",
     "wx_k_hail": "Grêle",
-    "wx_k_wind": "Venteux"
+    "wx_k_wind": "Venteux",
+    "vis_2_widgets_glashaus_klima": "Glashaus climate"
 }

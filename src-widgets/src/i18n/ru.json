@@ -784,5 +784,6 @@
     "wx_k_snow": "Снег",
     "wx_k_sleet": "Мокрый снег",
     "wx_k_hail": "Град",
-    "wx_k_wind": "Ветрено"
+    "wx_k_wind": "Ветрено",
+    "vis_2_widgets_glashaus_klima": "Glashaus climate"
 }

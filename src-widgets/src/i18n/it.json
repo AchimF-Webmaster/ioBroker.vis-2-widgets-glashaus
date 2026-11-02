@@ -784,5 +784,6 @@
     "wx_k_snow": "Neve",
     "wx_k_sleet": "Nevischio",
     "wx_k_hail": "Grandine",
-    "wx_k_wind": "Ventoso"
+    "wx_k_wind": "Ventoso",
+    "vis_2_widgets_glashaus_klima": "Glashaus climate"
 }

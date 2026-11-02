@@ -6,9 +6,9 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const pack = JSON.parse(readFileSync('./package.json').toString());
 const ioPack = JSON.parse(readFileSync('../io-package.json').toString());
-const collection = ioPack.common.visWidgets.vis2GlashausWidgets;
+const collection = ioPack.common.visWidgets.vis2GlashausKlimaWidgets;
 
-// The widgets come from io-package.json (common.visWidgets.vis2GlashausWidgets.components): one file src/<Name>.tsx each.
+// The widgets come from io-package.json (common.visWidgets.vis2GlashausKlimaWidgets.components): one file src/<Name>.tsx each.
 // GH_WIDGETS=Name1,Name2 builds only these (for quick local tests).
 const only = process.env.GH_WIDGETS ? process.env.GH_WIDGETS.split(',') : null;
 const exposes: Record<string, string> = { './translations': './src/translations' };

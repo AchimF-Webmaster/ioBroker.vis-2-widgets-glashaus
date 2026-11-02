@@ -1,7 +1,7 @@
 {
-  "name": "iobroker.vis-2-widgets-glashaus",
+  "name": "iobroker.vis-2-widgets-glashaus-klima",
   "version": "0.1.0",
-  "description": "Glashaus: glass design widgets for ioBroker vis-2 (particle backgrounds, energy flow, 3D year skyline, 3D house model, appliances, charts)",
+  "description": "Glashaus climate widget for ioBroker vis-2 (local build)",
   "author": "djlex83 <djlex83@users.noreply.github.com>",
   "contributors": [
     "djlex83 <djlex83@users.noreply.github.com>"
@@ -39,7 +39,7 @@
     "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
-  "main": "widgets/vis-2-widgets-glashaus/customWidgets.js",
+  "main": "widgets/vis-2-widgets-glashaus-klima/customWidgets.js",
   "files": [
     "admin/",
     "widgets/",
