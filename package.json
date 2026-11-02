@@ -1,6 +1,6 @@
 {
   "name": "iobroker.vis-2-widgets-glashaus",
-  "version": "0.1.0",
+  "version": "0.1.1-local.4",
   "description": "Glashaus: glass design widgets for ioBroker vis-2 (particle backgrounds, energy flow, 3D year skyline, 3D house model, appliances, charts)",
   "author": "djlex83 <djlex83@users.noreply.github.com>",
   "contributors": [

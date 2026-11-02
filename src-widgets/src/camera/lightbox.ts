@@ -14,6 +14,10 @@ export interface LightboxView {
     dark: boolean;
     /** Image, or null for the placeholder */
     src: string | null;
+    /** Live page (e.g. go2rtc WebRTC) shown in an iframe instead of the image */
+    live?: string | null;
+    /** Size of the view, 0.4 … 1 of the screen */
+    size?: number;
     time: string;
     pills: LightboxPill[];
     /** Glashaus icon name or image URL */
@@ -134,6 +138,7 @@ export class Lightbox {
         }
         root.className = `gh gh-cam-lb${v.dark ? ' gh-dark' : ''}`;
         root.setAttribute('aria-label', v.dialogLabel);
+        root.style.setProperty('--gh-cam-lbs', String(v.size ?? 1));
         const head =
             `<div class="gh-cam-h"><span class="gh-ico" style="--gh-c:${esc(v.accent)}">${iconHtml(v.icon)}</span>` +
             `<span class="gh-cam-name">${esc(v.title)}</span>${
@@ -145,9 +150,11 @@ export class Lightbox {
                 )
                 .join('')}</span>` +
             `<button type="button" class="gh-circ" data-gh-close aria-label="${esc(v.closeLabel)}" title="${esc(v.closeLabel)}">${CLOSE}</button></div>`;
-        const body = v.src
-            ? `<img src="${esc(v.src)}" alt="${esc(v.title)}" draggable="false">`
-            : `<div class="gh-cam-empty"><span class="gh-cam-empty-ico">${iconHtml('cam')}</span><b>${esc(v.emptyTitle)}</b><small>${esc(v.emptyText)}</small></div>`;
+        const body = v.live
+            ? `<iframe class="gh-cam-live" src="${esc(v.live)}" title="${esc(v.title)}" allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="no-referrer"></iframe>`
+            : v.src
+              ? `<img src="${esc(v.src)}" alt="${esc(v.title)}" draggable="false">`
+              : `<div class="gh-cam-empty"><span class="gh-cam-empty-ico">${iconHtml('cam')}</span><b>${esc(v.emptyTitle)}</b><small>${esc(v.emptyText)}</small></div>`;
         const card = root.querySelector('.gh-cam-card');
         if (!card) {
             root.innerHTML = `<div class="gh-cam-card gh-glass">${head}<div class="gh-cam-big">${body}</div></div>`;
@@ -165,7 +172,10 @@ export class Lightbox {
         }
         const big = card.querySelector('.gh-cam-big');
         const img = big?.querySelector('img');
-        if (img && v.src) {
+        const frame = big?.querySelector('iframe');
+        if (frame && v.live && frame.getAttribute('src') === v.live) {
+            // live stream keeps running: only the header changes
+        } else if (img && v.src && !v.live) {
             // swap only the source: no flicker
             if (img.getAttribute('src') !== v.src) {
                 img.setAttribute('src', v.src);

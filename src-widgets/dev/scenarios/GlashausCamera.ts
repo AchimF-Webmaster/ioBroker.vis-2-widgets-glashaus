@@ -91,4 +91,19 @@ export default [
             'harness.0.cam.drive.motion': { val: true, type: 'boolean' },
         },
     },
+    {
+        // live page in the tile (in the harness another harness page stands in for go2rtc)
+        widget: 'GlashausCamera',
+        name: 'live-tile',
+        w: 480,
+        h: 330,
+        data: { title: 'Einfahrt live', liveUrl: '/harness.html?w=GlashausGate&s=demo&solo=1&theme=dark', liveIn: 'tile' },
+    },
+    {
+        widget: 'GlashausCamera',
+        name: 'live-small-view',
+        w: 480,
+        h: 330,
+        data: { title: 'Kleine Großansicht', liveUrl: '/harness.html?w=GlashausGate&s=demo&solo=1&theme=dark', fullSize: 60 },
+    },
 ] satisfies Scenario[];

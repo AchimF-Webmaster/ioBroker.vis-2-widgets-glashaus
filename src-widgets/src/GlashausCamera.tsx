@@ -36,6 +36,9 @@ interface CameraRxData {
     oidMotion: string;
     lightbox: boolean | string;
     urlFull: string;
+    liveUrl: string;
+    liveIn: 'full' | 'tile';
+    fullSize: number | string;
 }
 
 interface CameraState extends VisRxWidgetState {
@@ -103,14 +106,16 @@ const CAM_CSS = `
 .gh.gh-cam-lb{position:fixed;inset:0;z-index:100000;width:auto;height:auto;display:flex;align-items:center;justify-content:center;padding:24px;
   background:rgba(12,12,11,.5);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:gh-cam-fade .3s var(--gh-ease) both}
 @keyframes gh-cam-fade{from{opacity:0}}
-.gh-cam-card{display:flex;flex-direction:column;gap:12px;padding:14px;width:min(1280px,100%);max-height:100%;border-radius:var(--gh-r-xl);
+.gh-cam-card{display:flex;flex-direction:column;gap:12px;padding:14px;width:calc(min(1280px,100%) * var(--gh-cam-lbs,1));max-height:100%;border-radius:var(--gh-r-xl);
   background:color-mix(in srgb,var(--gh-bg) 90%,transparent);animation:gh-cam-pop .45s var(--gh-ease) both}
 @keyframes gh-cam-pop{from{opacity:0;transform:translateY(14px) scale(.98)}}
 .gh-cam-card .gh-cam-h{padding:2px 2px 0 6px}
 .gh-cam-card .gh-cam-meta{font-size:12.5px;color:var(--gh-fg-2);font-variant-numeric:tabular-nums;white-space:nowrap}
 .gh-cam-big{position:relative;min-height:0;flex:1;display:flex;justify-content:center;border-radius:16px;overflow:hidden;background:#111}
 .gh-cam-big:has(.gh-cam-empty){background:transparent}
-.gh-cam-big img{display:block;max-width:100%;max-height:calc(100vh - 150px);width:auto;height:auto;object-fit:contain}
+.gh-cam-big .gh-cam-live{display:block;border:0;width:min(100%,calc((100vh - 150px) * var(--gh-cam-lbs,1) * 16 / 9));aspect-ratio:16/9;max-height:calc((100vh - 150px) * var(--gh-cam-lbs,1));background:#000}
+.gh-cam-tlive{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;pointer-events:none;background:#000}
+.gh-cam-big img{display:block;max-width:100%;max-height:calc((100vh - 150px) * var(--gh-cam-lbs,1));width:auto;height:auto;object-fit:contain}
 .gh-cam-big .gh-cam-empty{position:relative;min-height:240px;width:100%}
 @media (max-width:600px){.gh.gh-cam-lb{padding:10px}.gh-cam-card{padding:10px}}
 `;
@@ -249,6 +254,29 @@ export default class GlashausCamera extends GlashausWidget<CameraRxData, CameraS
                             label: 'cam_url_full',
                             tooltip: 'cam_url_full_tip',
                             hidden: (data: WidgetData) => !isTrue(data.lightbox, true),
+                        },
+                        {
+                            name: 'fullSize',
+                            label: 'cam_full_size',
+                            type: 'slider',
+                            min: 40,
+                            max: 100,
+                            step: 5,
+                            default: 100,
+                            tooltip: 'cam_full_size_tip',
+                            hidden: (data: WidgetData) => !isTrue(data.lightbox, true),
+                        },
+                        { name: 'liveUrl', label: 'cam_live_url', tooltip: 'cam_live_url_tip' },
+                        {
+                            name: 'liveIn',
+                            label: 'cam_live_in',
+                            type: 'select',
+                            options: [
+                                { value: 'full', label: 'cam_live_in_full' },
+                                { value: 'tile', label: 'cam_live_in_tile' },
+                            ],
+                            default: 'full',
+                            hidden: (data: WidgetData) => !data.liveUrl,
                         },
                     ],
                 },
@@ -507,9 +535,20 @@ export default class GlashausCamera extends GlashausWidget<CameraRxData, CameraS
         return 0;
     }
 
+    /** URL of the live page (go2rtc etc.): http(s) or a path on the same server */
+    private liveSrc(): string | null {
+        const u = GlashausWidget.ghText(this.state.rxData.liveUrl).trim();
+        return /^(https?:\/\/|\/)/i.test(u) ? u : null;
+    }
+
     private onOpen = (): void => {
         const d = this.state.rxData;
-        if (this.props.editMode || !isTrue(d.lightbox, true) || this.state.open || !this.state.src) {
+        if (
+            this.props.editMode ||
+            !isTrue(d.lightbox, true) ||
+            this.state.open ||
+            (!this.state.src && !this.liveSrc())
+        ) {
             return;
         }
         this.setState({ open: true }, () => {
@@ -624,6 +663,8 @@ export default class GlashausCamera extends GlashausWidget<CameraRxData, CameraS
                 title,
                 dark: this.ghDark(),
                 src,
+                live: this.liveSrc(),
+                size: clamp((toNum(d.fullSize) ?? 100) / 100, 0.4, 1),
                 time: s.src && isTrue(d.showTime, true) ? this.timeText(s.at) : '',
                 pills: this.pills(live, motion),
                 icon: this.ghIcon(),
@@ -652,7 +693,8 @@ export default class GlashausCamera extends GlashausWidget<CameraRxData, CameraS
         const radius = Math.round(clamp(Math.min(w, h) * 0.05, 10, 18));
         const motion = isOid(d.oidMotion) && toBool(this.ghVal(d.oidMotion));
         const live = this.liveUntil() > Date.now();
-        const clickable = !this.props.editMode && isTrue(d.lightbox, true) && !!s.src;
+        const liveTile = !this.props.editMode && d.liveIn === 'tile' ? this.liveSrc() : null;
+        const clickable = !this.props.editMode && isTrue(d.lightbox, true) && (!!s.src || !!this.liveSrc());
         const fit = d.fit === 'contain' ? 'contain' : 'cover';
         const small = Math.min(w, h) < 170;
         const pills = this.pills(live, motion);
@@ -690,14 +732,23 @@ export default class GlashausCamera extends GlashausWidget<CameraRxData, CameraS
                 ) : null}
                 <div
                     ref={this.frameRef}
-                    className={`gh-cam-frame${s.src ? '' : ' gh-cam-noimg'}`}
+                    className={`gh-cam-frame${s.src || liveTile ? '' : ' gh-cam-noimg'}`}
                     role={clickable ? 'button' : 'img'}
                     tabIndex={clickable ? 0 : undefined}
                     aria-label={frameLabel || undefined}
                     onClick={clickable ? this.onOpen : undefined}
                     onKeyDown={clickable ? this.onFrameKey : undefined}
                 >
-                    {s.src ? (
+                    {liveTile ? (
+                        <iframe
+                            className="gh-cam-tlive"
+                            src={liveTile}
+                            title={title}
+                            allow="autoplay"
+                            referrerPolicy="no-referrer"
+                            tabIndex={-1}
+                        />
+                    ) : s.src ? (
                         <img
                             className="gh-cam-img"
                             src={s.src}

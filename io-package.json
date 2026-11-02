@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "vis-2-widgets-glashaus",
-    "version": "0.1.0",
+    "version": "0.1.1-local.4",
     "news": {
+      "0.1.1-local.4": {
+        "en": "Own widgets restored from source: gate, fuel prices, agenda/waste collection, shutter, camera live view with adjustable large view",
+        "de": "Eigene Widgets aus dem Quellcode wiederhergestellt: Tor, Spritpreise, Termine/Müllabfuhr, Rollladen, Kamera-Livebild mit einstellbarer Großansicht"
+      },
       "0.1.0": {
         "en": "First release: 14 Glashaus widgets (background with particle motif, header, value, switch, ring, energy flow, chart, year skyline, appliance, camera, navigation, weather, status list, 3D house model)",
         "de": "Erste Version: 14 Glashaus-Widgets (Hintergrund mit Partikel-Motiv, Überschrift, Wert, Schalter, Ring, Energiefluss, Chart, Jahres-Skyline, Hausgerät, Kamera, Navigation, Wetter, Statusliste, 3D-Hausmodell)",
@@ -97,7 +101,10 @@
           "GlashausWeather",
           "GlashausStatusList",
           "GlashausHouse",
-          "GlashausClimate"
+          "GlashausGate",
+          "GlashausFuel",
+          "GlashausAgenda",
+          "GlashausShutter"
         ]
       }
     },
