@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "vis-2-widgets-glashaus",
-    "version": "0.1.1-local.4",
+    "version": "0.1.1-local.5",
     "news": {
+      "0.1.1-local.5": {
+        "en": "New widget: colour light (on/off, brightness, white tone, colour, presets; made for the hue adapter)",
+        "de": "Neues Widget: Farblicht (Ein/Aus, Helligkeit, Weißton, Farbe, Favoriten; passend zum Hue-Adapter)"
+      },
       "0.1.1-local.4": {
         "en": "Own widgets restored from source: gate, fuel prices, agenda/waste collection, shutter, camera live view with adjustable large view",
         "de": "Eigene Widgets aus dem Quellcode wiederhergestellt: Tor, Spritpreise, Termine/Müllabfuhr, Rollladen, Kamera-Livebild mit einstellbarer Großansicht"
@@ -104,7 +108,8 @@
           "GlashausGate",
           "GlashausFuel",
           "GlashausAgenda",
-          "GlashausShutter"
+          "GlashausShutter",
+          "GlashausLight"
         ]
       }
     },

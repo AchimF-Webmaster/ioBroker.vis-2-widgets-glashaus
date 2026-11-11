@@ -1,0 +1,70 @@
+import type { Scenario } from '../scenario';
+
+export default [
+    { widget: 'GlashausLight', name: 'demo', w: 360, h: 360 },
+    {
+        widget: 'GlashausLight',
+        name: 'hue-color',
+        w: 360,
+        h: 360,
+        data: {
+            title: 'Wohnzimmer',
+            oidOn: 'harness.0.lamp.on',
+            oidLevel: 'harness.0.lamp.level',
+            oidCt: 'harness.0.lamp.ct',
+            oidHue: 'harness.0.lamp.hue',
+            oidSat: 'harness.0.lamp.sat',
+            oidColormode: 'harness.0.lamp.colormode',
+        },
+        states: {
+            'harness.0.lamp.on': { val: true, type: 'boolean' },
+            'harness.0.lamp.level': { val: 64, unit: '%' },
+            'harness.0.lamp.ct': { val: 2700 },
+            'harness.0.lamp.hue': { val: 265 },
+            'harness.0.lamp.sat': { val: 70 },
+            'harness.0.lamp.colormode': { val: 'hs', type: 'string' },
+        },
+    },
+    {
+        widget: 'GlashausLight',
+        name: 'white-only',
+        w: 360,
+        h: 260,
+        data: {
+            title: 'Küche',
+            oidOn: 'harness.0.ws.on',
+            oidLevel: 'harness.0.ws.level',
+            oidCt: 'harness.0.ws.ct',
+            presets: '2700K,4000K,6000K',
+        },
+        states: {
+            'harness.0.ws.on': { val: false, type: 'boolean' },
+            'harness.0.ws.level': { val: 40 },
+            'harness.0.ws.ct': { val: 4000 },
+        },
+    },
+    {
+        widget: 'GlashausLight',
+        name: 'rgb-unreachable',
+        w: 300,
+        h: 300,
+        data: {
+            title: 'Stripe',
+            oidOn: 'harness.0.rgb.on',
+            oidLevel: 'harness.0.rgb.bri',
+            levelMax: 254,
+            colorType: 'rgb',
+            oidRgb: 'harness.0.rgb.color',
+            oidReachable: 'harness.0.rgb.reachable',
+            accent: 'teal',
+        },
+        states: {
+            'harness.0.rgb.on': { val: true, type: 'boolean' },
+            'harness.0.rgb.bri': { val: 200 },
+            'harness.0.rgb.color': { val: '#2bb3a3', type: 'string' },
+            'harness.0.rgb.reachable': { val: false, type: 'boolean' },
+        },
+    },
+    { widget: 'GlashausLight', name: 'small', w: 240, h: 200, data: { title: 'Esszimmer' } },
+    { widget: 'GlashausLight', name: 'strip', w: 360, h: 120, data: { title: 'Büro' } },
+] satisfies Scenario[];

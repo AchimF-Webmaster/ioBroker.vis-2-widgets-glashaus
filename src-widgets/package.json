@@ -1,7 +1,7 @@
 {
     "name": "iobroker.vis-2-widgets-glashaus-src",
     "private": true,
-    "version": "0.1.1-local.4",
+    "version": "0.1.1-local.5",
     "type": "module",
     "dependencies": {
         "@fontsource/geist-sans": "^5.3.0",
