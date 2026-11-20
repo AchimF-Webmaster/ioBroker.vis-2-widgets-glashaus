@@ -14,7 +14,7 @@ import type {
 
 import GlashausWidget, { ACCENTS, ADAPTER, SET_COLOR, accentColor, isOid, isTrue } from './core/GlashausWidget';
 import { GhIcon, GhIconBox, GhPill, GhRing, type GhPillKind } from './core/components';
-import { clamp, fmtDate, fmtNum, fmtTime, toBool, toNum } from './core/format';
+import { clamp, fmtDate, fmtNum, fmtPower, fmtTime, toBool, toNum } from './core/format';
 import { ensureWidgetCss } from './core/style';
 import {
     VIEWBOX,
@@ -60,6 +60,11 @@ interface ApplianceRxData {
     oidProgram: string;
     programSub: string;
     showEnd: boolean | string;
+    oidPower: string;
+    oidEnergy: string;
+    energyUnit: 'Wh' | 'kWh';
+    price: string | number;
+    currency: string;
 }
 
 interface ApplianceState extends VisRxWidgetState {
@@ -86,6 +91,10 @@ interface Reading {
     door: boolean;
     /** Done since (ms), from the last change of the state */
     since: number | null;
+    /** Current power in W (null: no ID) */
+    power: number | null;
+    /** Consumption of the running or last program in kWh (null: no ID) */
+    energy: number | null;
 }
 
 type Layout = 'wide' | 'tall' | 'mini';
@@ -93,10 +102,10 @@ type Layout = 'wide' | 'tall' | 'mini';
 const DEFAULT_ACCENT: Record<ApType, string> = { washer: 'home', dryer: 'heat', dishwasher: 'cool' };
 const ICON: Record<ApType, string> = { washer: 'washer', dryer: 'dryer', dishwasher: 'dish' };
 const FIG_RATIO: Record<ApType, number> = { washer: 220 / 312, dryer: 220 / 300, dishwasher: 220 / 300 };
-const DEMO: Record<ApType, { progress: number; remaining: number }> = {
-    washer: { progress: 0.42, remaining: 58 },
-    dryer: { progress: 0.41, remaining: 85 },
-    dishwasher: { progress: 0.32, remaining: 132 },
+const DEMO: Record<ApType, { progress: number; remaining: number; power: number; energy: number }> = {
+    washer: { progress: 0.42, remaining: 58, power: 186, energy: 0.38 },
+    dryer: { progress: 0.41, remaining: 85, power: 2120, energy: 1.46 },
+    dishwasher: { progress: 0.32, remaining: 132, power: 1940, energy: 0.41 },
 };
 
 const AP_CSS = `
@@ -169,6 +178,15 @@ const AP_CSS = `
 .gh-ap-sub{font-size:12.5px;color:var(--gh-fg-2);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .gh-ap-mini .gh-ap-sub{margin-top:3px;font-size:12px}
 .gh-ap-sub b{color:var(--gh-fg);font-weight:550}
+.gh-ap-info.gh-ap-hasmeta{grid-template-areas:"top top" "prog prog" "ring txt" "meta meta"}
+.gh-ap-mini .gh-ap-info.gh-ap-hasmeta{grid-template-areas:"ring top" "ring prog" "ring txt" "ring meta"}
+.gh-ap-meta{grid-area:meta;display:flex;align-items:center;gap:8px;min-width:0;margin-top:var(--gh-ap-meta-mt,14px);
+  font-size:12.5px;color:var(--gh-fg-2);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+.gh-ap-mini .gh-ap-meta{margin-top:3px;font-size:12px}
+.gh-ap-meta>span{display:inline-flex;align-items:center;gap:4px;min-width:0}
+.gh-ap-meta b{color:var(--gh-fg);font-weight:550}
+.gh-ap-meta .gh-ico-svg,.gh-ap-meta svg{flex:none;color:var(--gh-ap-acc,currentColor)}
+.gh-ap-meta i{font-style:normal;opacity:.5}
 `;
 
 let SEQ = 0;
@@ -387,6 +405,61 @@ export default class GlashausAppliance extends GlashausWidget<ApplianceRxData, A
                         { name: 'programSub', label: 'ap_program_sub', tooltip: 'ap_program_sub_tip' },
                     ],
                 },
+                {
+                    name: 'apPower',
+                    label: 'group_ap_power',
+                    fields: [
+                        { name: 'oidPower', label: 'ap_oid_power', type: 'id', tooltip: 'ap_oid_power_tip' },
+                        {
+                            name: 'oidEnergy',
+                            label: 'ap_oid_energy',
+                            type: 'id',
+                            tooltip: 'ap_oid_energy_tip',
+                            onChange: async (field, data, changeData, socket) => {
+                                const id = data[field.name!];
+                                if (!isOid(id)) {
+                                    return;
+                                }
+                                const obj = await socket.getObject(id);
+                                const unit = String((obj?.common as ioBroker.StateCommon | undefined)?.unit || '')
+                                    .trim()
+                                    .toLowerCase();
+                                const u = unit === 'wh' ? 'Wh' : unit === 'kwh' ? 'kWh' : null;
+                                if (u && data.energyUnit !== u) {
+                                    data.energyUnit = u;
+                                    changeData(data);
+                                }
+                            },
+                        },
+                        {
+                            name: 'energyUnit',
+                            label: 'ap_energy_unit',
+                            type: 'select',
+                            options: [
+                                { value: 'kWh', label: 'kWh' },
+                                { value: 'Wh', label: 'Wh' },
+                            ],
+                            noTranslation: true,
+                            default: 'kWh',
+                            hidden: (data: WidgetData) => !isOid(data.oidEnergy),
+                        },
+                        {
+                            name: 'price',
+                            label: 'ap_price',
+                            type: 'number',
+                            step: 0.01,
+                            min: 0,
+                            tooltip: 'ap_price_tip',
+                            hidden: (data: WidgetData) => !isOid(data.oidEnergy),
+                        },
+                        {
+                            name: 'currency',
+                            label: 'ap_currency',
+                            default: '€',
+                            hidden: (data: WidgetData) => !isOid(data.oidEnergy) || !(toNum(data.price) || 0),
+                        },
+                    ],
+                },
                 GlashausWidget.designGroup(),
             ],
             visDefaultStyle: { width: 460, height: 280, position: 'absolute' },
@@ -600,6 +673,8 @@ export default class GlashausAppliance extends GlashausWidget<ApplianceRxData, A
                 sub: programSub || GlashausWidget.tr(`ap_demo_sub_${type}`),
                 door: false,
                 since: null,
+                power: demo.power,
+                energy: demo.energy,
             };
         }
         let mode: ApMode = 'off';
@@ -673,6 +748,12 @@ export default class GlashausAppliance extends GlashausWidget<ApplianceRxData, A
             sub: programSub,
             door: isOid(d.oidDoor) ? doorOpen(this.ghVal(d.oidDoor)) : false,
             since,
+            power: isOid(d.oidPower) ? toNum(this.ghVal(d.oidPower)) : null,
+            energy: isOid(d.oidEnergy)
+                ? ((e: number | null) => (e === null ? null : d.energyUnit === 'Wh' ? e / 1000 : e))(
+                      toNum(this.ghVal(d.oidEnergy)),
+                  )
+                : null,
         };
     }
 
@@ -880,6 +961,13 @@ export default class GlashausAppliance extends GlashausWidget<ApplianceRxData, A
                 sub = mode === 'pause' ? tr('ap_paused_sub') : tr('ap_progress');
             } else {
                 big = <div className="gh-ap-msg">{mode === 'pause' ? tr('ap_pause_big') : tr('ap_run_big')}</div>;
+                if (r.since && mode === 'run') {
+                    sub = (
+                        <>
+                            {tr('ap_run_since')} <b>{fmtTime(r.since, lang)}</b>
+                        </>
+                    );
+                }
             }
         } else if (mode === 'done') {
             big = <div className="gh-ap-msg">{GlashausWidget.ghText(d.textDone) || tr('ap_text_done_default')}</div>;
@@ -903,6 +991,51 @@ export default class GlashausAppliance extends GlashausWidget<ApplianceRxData, A
         const showProg =
             !!(r.program || r.sub) && mode !== 'off' && !(L.layout === 'mini' && (this.state.h || 0) < 118);
 
+        // power and consumption below the ring: power while running (or above 1 W), consumption of this/last run
+        const meta: React.ReactNode[] = [];
+        const active = mode === 'run' || mode === 'pause';
+        if (r.power !== null && (active || r.power >= 1)) {
+            const pw = fmtPower(r.power, lang);
+            meta.push(
+                <span
+                    key="p"
+                    title={tr('ap_power_now')}
+                >
+                    <GhIcon
+                        name="bolt"
+                        size={13}
+                    />
+                    <b>{pw.v}</b>
+                    {pw.unit}
+                </span>,
+            );
+        }
+        if (r.energy !== null && (r.energy > 0 || active)) {
+            const price = toNum(d.price) || 0;
+            meta.push(
+                <span
+                    key="e"
+                    title={tr(mode === 'off' ? 'ap_energy_last' : 'ap_energy_run')}
+                >
+                    {mode === 'off' ? `${tr('ap_last')} ` : null}
+                    <b>{fmtNum(r.energy, r.energy < 10 ? 2 : 1, lang)}</b>
+                    kWh
+                </span>,
+            );
+            if (price > 0) {
+                meta.push(
+                    <span
+                        key="c"
+                        title={tr('ap_cost')}
+                    >
+                        <b>{fmtNum(r.energy * price, 2, lang)}</b>
+                        {GlashausWidget.ghText(d.currency) || '€'}
+                    </span>,
+                );
+            }
+        }
+        const showMeta = meta.length > 0 && !(L.layout === 'mini' && (this.state.h || 0) < 100);
+
         const style = {
             '--gh-ap-pad': `${L.pad}px`,
             '--gh-ap-gap': `${L.gap}px`,
@@ -913,6 +1046,8 @@ export default class GlashausAppliance extends GlashausWidget<ApplianceRxData, A
             '--gh-ap-cg': `${clamp(L.ring * 0.24, 10, 18).toFixed(0)}px`,
             '--gh-ap-top-mb': `${L.layout === 'tall' ? 10 : clamp(L.big * 0.32, 8, 16).toFixed(0)}px`,
             '--gh-ap-prog-mb': `${clamp(L.big * 0.3, 6, 14).toFixed(0)}px`,
+            '--gh-ap-meta-mt': `${clamp(L.big * 0.3, 8, 16).toFixed(0)}px`,
+            '--gh-ap-acc': accent,
         } as React.CSSProperties;
 
         return (
@@ -932,7 +1067,7 @@ export default class GlashausAppliance extends GlashausWidget<ApplianceRxData, A
                         className="gh-ap-fig"
                         style={L.layout === 'wide' ? { width: L.figW, height: L.figH } : undefined}
                     />
-                    <div className="gh-ap-info">
+                    <div className={`gh-ap-info${showMeta ? ' gh-ap-hasmeta' : ''}`}>
                         <div className="gh-ap-top">
                             <GhIconBox
                                 name={ICON[type]}
@@ -972,6 +1107,11 @@ export default class GlashausAppliance extends GlashausWidget<ApplianceRxData, A
                             {big}
                             {sub ? <div className="gh-ap-sub">{sub}</div> : null}
                         </div>
+                        {showMeta ? (
+                            <div className="gh-ap-meta">
+                                {meta.flatMap((m, i) => (i ? [<i key={`s${i}`}>·</i>, m] : [m]))}
+                            </div>
+                        ) : null}
                     </div>
                 </div>
                 {this.ghDemoBadge(demo)}
